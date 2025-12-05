@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Roommate Chores Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Firebase SDK -->
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
+</head>
+<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
+    <div class="max-w-2xl mx-auto">
+        <!-- Header -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
+            <h1 class="text-3xl font-bold text-indigo-600 mb-2 flex items-center gap-2">
+                📅 Roommate Chores
+            </h1>
+            <p class="text-gray-600">Track daily tasks together • <span id="syncStatus" class="text-yellow-600 font-semibold">⚙️ Setup Required</span></p>
+        </div>
+
+        <!-- Firebase Setup Instructions -->
+        <div id="setupNotice" class="bg-blue-50 border-2 border-blue-300 rounded-lg p-5 mb-4 shadow-md">
+            <h3 class="font-bold text-blue-900 mb-3 text-lg">🔧 Firebase Setup Required (One-time, 5 minutes)</h3>
+            <p class="text-blue-800 text-sm mb-3">To sync data across all 3 phones in real-time, complete these steps:</p>
+            
+            <div class="bg-white rounded-lg p-4 mb-3">
+                <p class="font-bold text-gray-800 mb-2">Step 1: Create Firebase Project</p>
+                <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
+                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 underline font-semibold">console.firebase.google.com</a></li>
+                    <li>Click "Add project" → Name it "roommate-chores"</li>
+                    <li>Disable Google Analytics → Click "Create project"</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 mb-3">
+                <p class="font-bold text-gray-800 mb-2">Step 2: Add Web App & Get Config</p>
+                <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
+                    <li>Click the Web icon (<code>&lt;/&gt;</code>)</li>
+                    <li>Register app → Copy the <code>firebaseConfig</code> object</li>
+                </ol>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 mb-3">
+                <p class="font-bold text-gray-800 mb-2">Step 3: Enable Realtime Database</p>
+                <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
+                    <li>Go to "Realtime Database" → "Create Database"</li>
+                    <li>Choose location → Start in Test mode</li>
+                    <li>Go to Rules tab → Paste this code:</li>
+                </ol>
+                <pre class="bg-gray-800 text-green-400 p-2 rounded mt-2 text-xs overflow-x-auto">
+{
+  "rules": {
+    ".read": true,
+    ".write": true
+  }
+}</pre>
+                <p class="text-xs text-gray-600 mt-1">Click "Publish"</p>
+            </div>
+
+            <div class="bg-white rounded-lg p-4 mb-3">
+                <p class="font-bold text-gray-800 mb-2">Step 4: Update This File</p>
+                <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
+                    <li>Open this HTML file in a text editor</li>
+                    <li>Find line ~77 (search for "YOUR_API_KEY_HERE")</li>
+                    <li>Replace the entire firebaseConfig with YOUR config</li>
+                    <li>Save and reload this page</li>
+                </ol>
+            </div>
+
+            <button onclick="document.getElementById('setupNotice').style.display='none'" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+                ✓ Got it! Hide Instructions
+            </button>
+        </div>
+
+        <!-- Roommate Selection -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Roommate</label>
+            <div class="grid grid-cols-3 gap-2" id="roommateButtons"></div>
+        </div>
+
+        <!-- Day Selection -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Day</label>
+            <div class="grid grid-cols-2 gap-2" id="dayButtons"></div>
+        </div>
+
+        <!-- Chores List -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-bold text-gray-800">Today's Tasks</h2>
+                <button onclick="toggleAddChore()" class="bg-green-500 text-white p-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
+                    ➕ Add Task
+                </button>
+            </div>
+
+            <!-- Add Chore Form -->
+            <div id="addChoreForm" class="mb-4 flex gap-2 hidden">
+                <input
+                    type="text"
+                    id="newChoreInput"
+                    placeholder="Enter new task..."
+                    class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                    onkeypress="if(event.key==='Enter') addNewChore()"
+                />
+                <button onclick="addNewChore()" class="bg-indigo-600 text-white px-6 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                    Add
+                </button>
+            </div>
+
+            <div id="choresList" class="space-y-3"></div>
+        </div>
+
+        <!-- Summary -->
+        <div class="bg-white rounded-lg shadow-lg p-4">
+            <h3 class="text-lg font-bold text-gray-800 mb-3">Week Summary for <span id="summaryRoommate" class="text-indigo-600">Aditya</span></h3>
+            <div id="weeklySummary" class="space-y-2"></div>
+        </div>
+
+        <!-- Footer Info -->
+        <div class="bg-white rounded-lg shadow-lg p-4 mt-4 text-center">
+            <p class="text-gray-600 text-sm">
+                Made by ADITYA
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // ⚠️ REPLACE THIS WITH YOUR FIREBASE CONFIG FROM FIREBASE CONSOLE
+        // Get it from: Firebase Console → Project Settings → Your apps → Config
+        const firebaseConfig = {
+    apiKey: "AIzaSyDbS8kO2RUHImnAPov4RLRVC8Y30jto8UI",
+    authDomain: "chores-15512.firebaseapp.com",
+    databaseURL: "https://chores-15512-default-rtdb.asia-southeast1.firebasedatabase.app",
+    projectId: "chores-15512",
+    storageBucket: "chores-15512.firebasestorage.app",
+    messagingSenderId: "294174783552",
+    appId: "1:294174783552:web:38021e29628bf0b48947a5"
+};
+        let database;
+        let isFirebaseConfigured = false;
+
+        // Check if Firebase is properly configured
+        if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
+            try {
+                firebase.initializeApp(firebaseConfig);
+                database = firebase.database();
+                isFirebaseConfigured = true;
+                document.getElementById('setupNotice').style.display = 'none';
+                document.getElementById('syncStatus').innerHTML = '🟢 Connected';
+                document.getElementById('syncStatus').className = 'text-green-600 font-semibold';
+                console.log("✅ Firebase connected successfully!");
+            } catch (error) {
+                console.error("❌ Firebase initialization error:", error);
+                document.getElementById('syncStatus').innerHTML = '🔴 Connection Error';
+                document.getElementById('syncStatus').className = 'text-red-600 font-semibold';
+                alert("Firebase connection error. Please check your config and internet connection.");
+            }
+        } else {
+            console.log("⚠️ Firebase not configured yet. Using offline mode.");
+            document.getElementById('syncStatus').innerHTML = '⚠️ Offline Mode';
+            document.getElementById('syncStatus').className = 'text-yellow-600 font-semibold';
+        }
+
+        // Global state
+        let state = {
+            roommates: ['Aditya', 'Ujjawal', 'Prince Lodu'],
+            days: ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'],
+            chores: [
+                {
+                    name: 'Bartan Dhona',
+                    subtasks: ['Set 1', 'Set 2', 'Set 3']
+                },
+                {
+                    name: 'Making Breakfast',
+                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                },
+                {
+                    name: 'Making Lunch',
+                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                },
+                {
+                    name: 'Making Dinner',
+                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                },
+                {
+                    name: 'Room Cleaning',
+                    subtasks: ['Jhadu', 'Pocha', 'Bathroom Cleaning']
+                },
+                {
+                    name: 'Neeche Se Paani Lana',
+                    subtasks: []
+                }
+            ],
+            customChores: [],
+            selectedRoommate: 'Aditya',
+            selectedDay: '',
+            completedTasks: {}
+        };
+
+        // Initialize app
+        function init() {
+            const dayIndex = new Date().getDay();
+            state.selectedDay = state.days[dayIndex === 0 ? 6 : dayIndex - 1];
+            
+            if (isFirebaseConfigured) {
+                console.log("Loading data from Firebase...");
+                loadFromFirebase();
+                setupFirebaseListeners();
+            } else {
+                console.log("Loading data from LocalStorage (offline mode)...");
+                loadFromLocalStorage();
+            }
+            
+            render();
+        }
+
+        // Firebase Functions - Load data from Firebase
+        function loadFromFirebase() {
+            // Load custom chores
+            database.ref('customChores').once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.customChores = snapshot.val() || [];
+                    console.log("Custom chores loaded:", state.customChores);
+                }
+                render();
+            }).catch(error => {
+                console.error("Error loading custom chores:", error);
+            });
+
+            // Load completed tasks
+            database.ref('completedTasks').once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.completedTasks = snapshot.val() || {};
+                    console.log("Completed tasks loaded");
+                }
+                render();
+            }).catch(error => {
+                console.error("Error loading completed tasks:", error);
+            });
+        }
+
+        // Setup real-time listeners for Firebase
+        function setupFirebaseListeners() {
+            // Listen for changes in completed tasks
+            database.ref('completedTasks').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.completedTasks = snapshot.val() || {};
+                    render();
+                }
+            });
+
+            // Listen for changes in custom chores
+            database.ref('customChores').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.customChores = snapshot.val() || [];
+                    render();
+                }
+            });
+        }
+
+        // Save data to Firebase
+        function saveToFirebase() {
+            if (isFirebaseConfigured) {
+                database.ref('completedTasks').set(state.completedTasks)
+                    .then(() => console.log("✅ Tasks synced"))
+                    .catch(error => console.error("❌ Sync error:", error));
+                    
+                database.ref('customChores').set(state.customChores)
+                    .then(() => console.log("✅ Custom chores synced"))
+                    .catch(error => console.error("❌ Sync error:", error));
+            } else {
+                saveToLocalStorage();
+            }
+        }
+
+        // LocalStorage fallback (offline mode)
+        function loadFromLocalStorage() {
+            const savedCustomChores = localStorage.getItem('customChores');
+            state.customChores = savedCustomChores ? JSON.parse(savedCustomChores) : [];
+            
+            const savedTasks = localStorage.getItem('completedTasks');
+            state.completedTasks = savedTasks ? JSON.parse(savedTasks) : {};
+        }
+
+        function saveToLocalStorage() {
+            localStorage.setItem('customChores', JSON.stringify(state.customChores));
+            localStorage.setItem('completedTasks', JSON.stringify(state.completedTasks));
+        }
+
+        // Helper functions
+        function getTaskKey(roommate, day, chore, subtask = null) {
+            if (subtask) {
+                return `${roommate}-${day}-${chore}-${subtask}`;
+            }
+            return `${roommate}-${day}-${chore}`;
+        }
+
+        function isTaskCompleted(chore, subtask = null) {
+            const key = getTaskKey(state.selectedRoommate, state.selectedDay, chore, subtask);
+            return state.completedTasks[key] || false;
+        }
+
+        function getCompletedCount(roommate, day) {
+            let total = 0;
+            let completed = 0;
+            
+            [...state.chores, ...state.customChores].forEach(chore => {
+                if (chore.subtasks && chore.subtasks.length > 0) {
+                    chore.subtasks.forEach(subtask => {
+                        total++;
+                        const key = getTaskKey(roommate, day, chore.name, subtask);
+                        if (state.completedTasks[key]) completed++;
+                    });
+                } else {
+                    total++;
+                    const key = getTaskKey(roommate, day, chore.name);
+                    if (state.completedTasks[key]) completed++;
+                }
+            });
+            
+            return { completed, total };
+        }
+
+        // User actions
+        function toggleTask(chore, subtask = null) {
+            const key = getTaskKey(state.selectedRoommate, state.selectedDay, chore, subtask);
+            state.completedTasks[key] = !state.completedTasks[key];
+            saveToFirebase();
+            render();
+        }
+
+        function selectRoommate(roommate) {
+            state.selectedRoommate = roommate;
+            render();
+        }
+
+        function selectDay(day) {
+            state.selectedDay = day;
+            render();
+        }
+
+        function toggleAddChore() {
+            const form = document.getElementById('addChoreForm');
+            form.classList.toggle('hidden');
+            if (!form.classList.contains('hidden')) {
+                document.getElementById('newChoreInput').focus();
+            }
+        }
+
+        function addNewChore() {
+            const input = document.getElementById('newChoreInput');
+            const newChore = input.value.trim();
+            
+            if (newChore) {
+                state.customChores.push({ name: newChore, subtasks: [] });
+                input.value = '';
+                document.getElementById('addChoreForm').classList.add('hidden');
+                saveToFirebase();
+                render();
+            }
+        }
+
+        // Render functions
+        function render() {
+            renderRoommateButtons();
+            renderDayButtons();
+            renderChoresList();
+            renderWeeklySummary();
+        }
+
+        function renderRoommateButtons() {
+            const container = document.getElementById('roommateButtons');
+            container.innerHTML = state.roommates.map(roommate => `
+                <button
+                    onclick="selectRoommate('${roommate}')"
+                    class="p-3 rounded-lg font-medium transition-all ${
+                        state.selectedRoommate === roommate
+                            ? 'bg-indigo-600 text-white shadow-md'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                    }"
+                >
+                    ${roommate}
+                </button>
+            `).join('');
+        }
+
+        function renderDayButtons() {
+            const container = document.getElementById('dayButtons');
+            container.innerHTML = state.days.map(day => {
+                const { completed, total } = getCompletedCount(state.selectedRoommate, day);
+                return `
+                    <button
+                        onclick="selectDay('${day}')"
+                        class="p-3 rounded-lg font-medium transition-all ${
+                            state.selectedDay === day
+                                ? 'bg-indigo-600 text-white shadow-md'
+                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }"
+                    >
+                        ${day}
+                        <span class="ml-2 text-xs">(${completed}/${total})</span>
+                    </button>
+                `;
+            }).join('');
+        }
+
+        function renderChoresList() {
+            const container = document.getElementById('choresList');
+            const allChores = [...state.chores, ...state.customChores];
+            
+            container.innerHTML = allChores.map(chore => {
+                if (chore.subtasks && chore.subtasks.length > 0) {
+                    return `
+                        <div class="border-2 border-gray-200 rounded-lg p-3 bg-gray-50">
+                            <h3 class="font-bold text-gray-800 mb-2 text-lg">${chore.name}</h3>
+                            <div class="space-y-2 ml-2">
+                                ${chore.subtasks.map(subtask => {
+                                    const completed = isTaskCompleted(chore.name, subtask);
+                                    return `
+                                        <button
+                                            onclick="toggleTask('${chore.name.replace(/'/g, "\\'")}', '${subtask.replace(/'/g, "\\'")}')"
+                                            class="w-full p-3 rounded-lg flex items-center gap-3 transition-all ${
+                                                completed
+                                                    ? 'bg-green-100 border-2 border-green-500'
+                                                    : 'bg-white border-2 border-gray-300 hover:bg-gray-100'
+                                            }"
+                                        >
+                                            <div class="w-5 h-5 rounded flex items-center justify-center ${
+                                                completed
+                                                    ? 'bg-green-500 text-white font-bold'
+                                                    : 'bg-white border-2 border-gray-400'
+                                            }">
+                                                ${completed ? '✓' : ''}
+                                            </div>
+                                            <span class="font-medium text-left ${
+                                                completed
+                                                    ? 'text-green-800 line-through'
+                                                    : 'text-gray-700'
+                                            }">
+                                                ${subtask}
+                                            </span>
+                                        </button>
+                                    `;
+                                }).join('')}
+                            </div>
+                        </div>
+                    `;
+                } else {
+                    const completed = isTaskCompleted(chore.name);
+                    return `
+                        <button
+                            onclick="toggleTask('${chore.name.replace(/'/g, "\\'")}')"
+                            class="w-full p-4 rounded-lg flex items-center gap-3 transition-all ${
+                                completed
+                                    ? 'bg-green-100 border-2 border-green-500'
+                                    : 'bg-gray-50 border-2 border-gray-200 hover:bg-gray-100'
+                            }"
+                        >
+                            <div class="w-6 h-6 rounded-md flex items-center justify-center ${
+                                completed
+                                    ? 'bg-green-500 text-white font-bold'
+                                    : 'bg-white border-2 border-gray-300'
+                            }">
+                                ${completed ? '✓' : ''}
+                            </div>
+                            <span class="font-medium flex-1 text-left ${
+                                completed
+                                    ? 'text-green-800 line-through'
+                                    : 'text-gray-800'
+                            }">
+                                ${chore.name}
+                            </span>
+                        </button>
+                    `;
+                }
+            }).join('');
+        }
+
+        function renderWeeklySummary() {
+            document.getElementById('summaryRoommate').textContent = state.selectedRoommate;
+            const container = document.getElementById('weeklySummary');
+            
+            container.innerHTML = state.days.map(day => {
+                const { completed, total } = getCompletedCount(state.selectedRoommate, day);
+                const percentage = total > 0 ? (completed / total) * 100 : 0;
+                
+                return `
+                    <div class="flex items-center gap-3">
+                        <span class="w-24 text-sm font-medium text-gray-700">${day}</span>
+                        <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                            <div
+                                class="bg-indigo-600 h-full flex items-center justify-end pr-2 transition-all duration-300"
+                                style="width: ${percentage}%"
+                            >
+                                ${percentage > 20 ? `<span class="text-xs text-white font-medium">${completed}/${total}</span>` : ''}
+                            </div>
+                        </div>
+                        ${percentage <= 20 ? `<span class="text-xs text-gray-600 font-medium w-12">${completed}/${total}</span>` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // Start the app when page loads
+        window.onload = init;
+    </script>
+</body>
+</html>
