@@ -4,129 +4,275 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Roommate Chores Tracker</title>
+
+    <!-- PWA Manifest (same as before) -->
     <link rel="manifest" href="data:application/json;base64,ewogICJuYW1lIjogIlJvb21tYXRlIENob3JlcyBUcmFja2VyIiwKICAic2hvcnRfbmFtZSI6ICJDaG9yZXMiLAogICJzdGFydF91cmwiOiAiLyIsCiAgImRpc3BsYXkiOiAic3RhbmRhbG9uZSIsCiAgImJhY2tncm91bmRfY29sb3IiOiAiI2ZmZmZmZiIsCiAgInRoZW1lX2NvbG9yIjogIiM0ZjQ2ZTUiLAogICJpY29ucyI6IFsKICAgIHsKICAgICAgInNyYyI6ICJkYXRhOmltYWdlL3N2Zyt4bWw7YmFzZTY0LFBITjJaeUI0Yld4dWN6MGlhSFIwY0RvdkwzZDNkeTUzTXk1dmNtY3ZNakF3TUM5emRtY2lJSGRwWkhSb1BTSXlOVFlpSUdobGFXZG9kRDBpTWpVMklqNDhjbVZqZENCM2FXUjBhRDBpTWpVMklpQm9aV2xuYUhROUlqSTFOaUlnWm1sc2JEMGlJelJtTkRabE5TSXZQanh3WVhSb0lHUTlJazB4TWpnZ09EQmpNQ0F5Tmkwek1DQXlOaTAwTmlBeU5pMDBOaUF5Tmkwek1DQXlOaTAwTmlBeU5pMDFOaUF3TFRFd05DQTBOaTB4TURRZ05EWWlJR1pwYkd3OUlpTm1abVptSWk4K1BDOXPKZ6MD0iLAogICAgICAic2l6ZXMiOiAiMjU2eDI1NiIsCiAgICAgICJ0eXBlIjogImltYWdlL3N2Zyt4bWwiCiAgICB9CiAgXQp9">
+
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
+
     <!-- Firebase SDK -->
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-database-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.7.1/firebase-messaging-compat.js"></script>
+
+    <!-- Small custom animations -->
+    <style>
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.7s ease-out;
+        }
+
+        .slide-up {
+            animation: slideUp 0.45s ease-out;
+        }
+
+        .card-hover {
+            transition: transform 0.2s ease, box-shadow 0.2s ease, background 0.2s ease;
+        }
+
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 18px 45px rgba(15, 23, 42, 0.18);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+    </style>
 </head>
-<body class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-    <div class="max-w-2xl mx-auto">
+
+<body class="min-h-screen bg-gradient-to-br from-slate-900 via-indigo-900 to-sky-700 px-4 py-6">
+    <div class="max-w-3xl mx-auto fade-in space-y-4">
+        <!-- Top pill -->
+        <div class="flex justify-center mb-1">
+            <div class="inline-flex items-center gap-2 rounded-full bg-black/20 px-4 py-1 text-xs text-slate-200 backdrop-blur">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span>
+                <span>Shared in real-time between 3 roommates</span>
+            </div>
+        </div>
+
         <!-- Header -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-4">
-            <div class="flex justify-between items-start">
+        <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl px-5 py-4 sm:px-7 sm:py-6 text-white backdrop-blur-xl card-hover">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                 <div>
-                    <h1 class="text-3xl font-bold text-indigo-600 mb-2 flex items-center gap-2">
-                        📅 Roommate Chores
+                    <h1 class="text-3xl sm:text-4xl font-extrabold tracking-tight flex items-center gap-2">
+                        <span class="inline-flex h-9 w-9 items-center justify-center rounded-2xl bg-indigo-500/80 shadow-md">
+                            📅
+                        </span>
+                        <span>Roommate Chores</span>
                     </h1>
-                    <p class="text-gray-600">Track daily tasks together • <span id="syncStatus" class="text-yellow-600 font-semibold">⚙️ Setup Required</span></p>
+                    <p class="mt-1 text-sm sm:text-base text-slate-200/80">
+                        Track cooking, cleaning & more — all from your phones.
+                        <span id="syncStatus" class="ml-1 font-semibold text-amber-300">⚙️ Setup Required</span>
+                    </p>
                 </div>
-                <button id="notificationBtn" onclick="enableNotifications()" class="bg-indigo-100 text-indigo-700 px-4 py-2 rounded-lg hover:bg-indigo-200 transition-colors text-sm font-medium hidden">
-                    🔔 Enable Alerts
+                <button
+                    id="notificationBtn"
+                    onclick="enableNotifications()"
+                    class="hidden bg-indigo-500/90 hover:bg-indigo-400 text-xs sm:text-sm font-semibold px-4 py-2 rounded-xl shadow-md shadow-indigo-900/40 transition-all flex items-center gap-2 justify-center"
+                >
+                    <span class="text-lg">🔔</span>
+                    Enable Alerts
                 </button>
             </div>
         </div>
 
         <!-- Notification Status -->
-        <div id="notificationStatus" class="bg-green-100 border-2 border-green-400 rounded-lg p-3 mb-4 hidden">
-            <p class="text-green-800 text-sm font-medium">✅ Notifications enabled! You'll get alerts when tasks are completed.</p>
+        <div id="notificationStatus" class="hidden bg-emerald-500/10 border border-emerald-400/60 rounded-2xl p-3 sm:p-4 text-emerald-100 text-sm backdrop-blur card-hover">
+            <p class="font-medium flex items-center gap-2">
+                <span class="text-lg">✅</span>
+                Notifications enabled! You'll get alerts when tasks & reminders trigger.
+            </p>
         </div>
 
         <!-- Firebase Setup Instructions -->
-        <div id="setupNotice" class="bg-blue-50 border-2 border-blue-300 rounded-lg p-5 mb-4 shadow-md">
-            <h3 class="font-bold text-blue-900 mb-3 text-lg">🔧 Firebase Setup Required (One-time, 5 minutes)</h3>
-            <p class="text-blue-800 text-sm mb-3">To sync data across all 3 phones in real-time, complete these steps:</p>
-            
-            <div class="bg-white rounded-lg p-4 mb-3">
-                <p class="font-bold text-gray-800 mb-2">Step 1: Create Firebase Project</p>
+        <div id="setupNotice" class="bg-sky-50/90 border border-sky-200 rounded-2xl p-5 sm:p-6 shadow-lg slide-up">
+            <h3 class="font-bold text-sky-900 mb-3 text-lg flex items-center gap-2">
+                <span>🔧 Firebase Setup (One-time, 5 mins)</span>
+            </h3>
+            <p class="text-sky-800 text-sm mb-3">
+                To sync data across all 3 phones in real-time, complete these steps:
+            </p>
+
+            <div class="bg-white rounded-xl p-4 mb-3 shadow-sm">
+                <p class="font-semibold text-gray-900 mb-1">Step 1: Create Firebase Project</p>
                 <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
-                    <li>Go to <a href="https://console.firebase.google.com" target="_blank" class="text-blue-600 underline font-semibold">console.firebase.google.com</a></li>
-                    <li>Click "Add project" → Name it "roommate-chores"</li>
-                    <li>Disable Google Analytics → Click "Create project"</li>
+                    <li>Go to
+                        <a href="https://console.firebase.google.com" target="_blank" class="text-indigo-600 underline font-semibold">
+                            console.firebase.google.com
+                        </a>
+                    </li>
+                    <li>Click <span class="font-medium">"Add project"</span> → Name it <code class="bg-slate-100 px-1 rounded">roommate-chores</code></li>
+                    <li>Disable Google Analytics → Click <span class="font-medium">"Create project"</span></li>
                 </ol>
             </div>
 
-            <div class="bg-white rounded-lg p-4 mb-3">
-                <p class="font-bold text-gray-800 mb-2">Step 2: Add Web App & Get Config</p>
+            <div class="bg-white rounded-xl p-4 mb-3 shadow-sm">
+                <p class="font-semibold text-gray-900 mb-1">Step 2: Add Web App & Get Config</p>
                 <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
                     <li>Click the Web icon (<code>&lt;/&gt;</code>)</li>
                     <li>Register app → Copy the <code>firebaseConfig</code> object</li>
-                    <li>Replace the config in this file (line 115-122)</li>
+                    <li>Replace the config in this file (line ~145)</li>
                 </ol>
             </div>
 
-            <div class="bg-white rounded-lg p-4 mb-3">
-                <p class="font-bold text-gray-800 mb-2">Step 3: Enable Realtime Database</p>
+            <div class="bg-white rounded-xl p-4 mb-3 shadow-sm">
+                <p class="font-semibold text-gray-900 mb-1">Step 3: Enable Realtime Database</p>
                 <ol class="text-gray-700 text-sm space-y-1 ml-4 list-decimal">
-                    <li>Go to "Realtime Database" → "Create Database"</li>
-                    <li>Choose location → Start in Test mode</li>
+                    <li>Go to <span class="font-medium">"Realtime Database"</span> → <span class="font-medium">"Create Database"</span></li>
+                    <li>Choose location → <span class="font-medium">Start in Test mode</span></li>
                     <li>Database rules already set for 2026! ✅</li>
                 </ol>
             </div>
 
-            <button onclick="document.getElementById('setupNotice').style.display='none'" class="w-full bg-blue-600 text-white px-4 py-3 rounded-lg hover:bg-blue-700 font-semibold">
+            <button
+                onclick="document.getElementById('setupNotice').style.display='none'"
+                class="w-full mt-2 bg-indigo-600 text-white px-4 py-3 rounded-xl hover:bg-indigo-700 font-semibold shadow-md shadow-indigo-300/40 transition-all active:scale-[0.98]"
+            >
                 ✓ Got it! Hide Instructions
             </button>
         </div>
 
-        <!-- Roommate Selection -->
-        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Roommate</label>
-            <div class="grid grid-cols-3 gap-2" id="roommateButtons"></div>
+        <!-- Main layout: left (controls) + right (summary) -->
+        <div class="grid md:grid-cols-2 gap-4 md:gap-5">
+            <div class="space-y-4">
+                <!-- Roommate Selection -->
+                <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl p-4 sm:p-5 backdrop-blur card-hover">
+                    <label class="block text-xs font-semibold text-slate-200 uppercase tracking-wide mb-2">Select Roommate</label>
+                    <div class="grid grid-cols-3 gap-2" id="roommateButtons"></div>
+                </div>
+
+                <!-- Day Selection -->
+                <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl p-4 sm:p-5 backdrop-blur card-hover">
+                    <label class="block text-xs font-semibold text-slate-200 uppercase tracking-wide mb-2">Select Day</label>
+                    <div class="grid grid-cols-2 gap-2" id="dayButtons"></div>
+                </div>
+            </div>
+
+            <div class="space-y-4">
+                <!-- Summary -->
+                <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl p-4 sm:p-5 backdrop-blur card-hover">
+                    <h3 class="text-base sm:text-lg font-semibold text-slate-100 mb-3 flex items-center gap-2">
+                        <span class="text-xl">📊</span>
+                        Week Summary for
+                        <span id="summaryRoommate" class="text-indigo-200 font-bold">Aditya</span>
+                    </h3>
+                    <div id="weeklySummary" class="space-y-2"></div>
+                </div>
+
+                <!-- Footer Info -->
+               <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl p-4 text-center text-slate-100 backdrop-blur card-hover">
+    <p class="text-sm font-semibold tracking-wide">
+        Made by ADITYA 🚀💻✨
+    </p>
+    <p class="text-xs text-slate-300 mt-2">
+        💡 Tip: Add to Home Screen for app-like experience!
+    </p>
+</div>
+
+            </div>
         </div>
 
-        <!-- Day Selection -->
-        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">Select Day</label>
-            <div class="grid grid-cols-2 gap-2" id="dayButtons"></div>
-        </div>
-
-        <!-- Chores List -->
-        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-            <div class="flex justify-between items-center mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Today's Tasks</h2>
-                <button onclick="toggleAddChore()" class="bg-green-500 text-white p-2 px-4 rounded-lg hover:bg-green-600 transition-colors font-medium">
-                    ➕ Add Task
+        <!-- Chores List (full width) -->
+        <div class="bg-white/10 border border-white/10 rounded-2xl shadow-xl p-4 sm:p-5 backdrop-blur card-hover">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4">
+                <div>
+                    <h2 class="text-xl sm:text-2xl font-bold text-slate-100 flex items-center gap-2">
+                        <span class="text-2xl">✅</span>
+                        <span>Today's Tasks</span>
+                    </h2>
+                    <p class="text-xs text-slate-300 mt-1">
+                        Tap a task to mark it complete. Everything syncs between all devices.
+                    </p>
+                </div>
+                <button
+                    onclick="toggleAddChore()"
+                    class="bg-emerald-500/90 hover:bg-emerald-400 text-sm font-semibold px-4 py-2 rounded-xl shadow-md shadow-emerald-900/40 transition-all flex items-center gap-2 self-start sm:self-auto"
+                >
+                    <span>➕</span> Add Task
                 </button>
             </div>
 
             <!-- Add Chore Form -->
-            <div id="addChoreForm" class="mb-4 flex gap-2 hidden">
+            <div id="addChoreForm" class="mb-4 flex gap-2 hidden slide-up">
                 <input
                     type="text"
                     id="newChoreInput"
-                    placeholder="Enter new task..."
-                    class="flex-1 p-3 border-2 border-gray-300 rounded-lg focus:border-indigo-500 focus:outline-none"
+                    placeholder="Enter new task (e.g., Dusting, Balcony Cleaning)"
+                    class="flex-1 px-3 py-2 sm:px-4 sm:py-3 text-sm bg-white/90 border border-slate-200 rounded-xl focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/60 focus:outline-none shadow-sm"
                     onkeypress="if(event.key==='Enter') addNewChore()"
                 />
-                <button onclick="addNewChore()" class="bg-indigo-600 text-white px-6 rounded-lg hover:bg-indigo-700 transition-colors font-medium">
+                <button
+                    onclick="addNewChore()"
+                    class="bg-indigo-600 hover:bg-indigo-500 text-white px-4 sm:px-5 rounded-xl text-sm font-semibold shadow-md shadow-indigo-900/40 transition-all"
+                >
                     Add
                 </button>
             </div>
 
+            <!-- Tasks -->
             <div id="choresList" class="space-y-3"></div>
-        </div>
 
-        <!-- Summary -->
-        <div class="bg-white rounded-lg shadow-lg p-4 mb-4">
-            <h3 class="text-lg font-bold text-gray-800 mb-3">Week Summary for <span id="summaryRoommate" class="text-indigo-600">Aditya</span></h3>
-            <div id="weeklySummary" class="space-y-2"></div>
-        </div>
+            <!-- Reminders Section -->
+            <div class="mt-6 border-t border-white/20 pt-4">
+                <h3 class="text-sm font-bold mb-2 text-slate-100 flex items-center gap-2">
+                    <span class="text-lg">⏰</span>
+                    Time Reminders
+                </h3>
+                <p class="text-xs text-slate-300 mb-2">
+                    Set a reminder like <span class="font-semibold">"Bartan Dhona"</span> at <span class="font-semibold">22:30</span>.
+                    Works when the app is open or in background.
+                </p>
 
-        <!-- Footer Info -->
-        <div class="bg-white rounded-lg shadow-lg p-4 text-center">
-            <p class="text-gray-600 text-sm">
-                Made by ADITYA
-            </p>
-            <p class="text-gray-500 text-xs mt-2">
-                💡 Tip: Add to Home Screen for app-like experience!
-            </p>
+                <div class="flex flex-col sm:flex-row gap-2 mb-2">
+                    <input
+                        type="text"
+                        id="reminderTextInput"
+                        placeholder="Reminder text (e.g. Bartan Dhona, Roti Banana)"
+                        class="flex-1 px-3 py-2 bg-white/90 text-slate-900 border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/60 focus:outline-none"
+                    />
+                    <input
+                        type="time"
+                        id="reminderTimeInput"
+                        class="px-3 py-2 bg-white/90 text-slate-900 border border-slate-200 rounded-xl text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-400/60 focus:outline-none"
+                    />
+                    <button
+                        onclick="addReminder()"
+                        class="bg-emerald-500 hover:bg-emerald-400 text-white px-3 py-2 rounded-xl text-sm font-semibold shadow-md shadow-emerald-900/40"
+                    >
+                        Save
+                    </button>
+                </div>
+
+                <div id="remindersList" class="space-y-1 text-xs text-slate-100"></div>
+            </div>
         </div>
     </div>
 
     <script>
-        // Firebase Configuration - REPLACE WITH YOUR CONFIG
+        // Firebase Configuration - (Your config kept as-is)
         const firebaseConfig = {
             apiKey: "AIzaSyDbS8kO2RUHImnAPov4RLRVC8Y30jto8UI",
             authDomain: "chores-15512.firebaseapp.com",
@@ -141,6 +287,10 @@
         let isFirebaseConfigured = false;
         let notificationsEnabled = false;
 
+        // For reminders
+        let reminderInterval = null;
+        const triggeredRemindersToday = {}; // {dateString: {id: true}}
+
         // Check if Firebase is properly configured
         if (firebaseConfig.apiKey !== "YOUR_API_KEY_HERE") {
             try {
@@ -149,12 +299,12 @@
                 isFirebaseConfigured = true;
                 document.getElementById('setupNotice').style.display = 'none';
                 document.getElementById('syncStatus').innerHTML = '🟢 Connected';
-                document.getElementById('syncStatus').className = 'text-green-600 font-semibold';
+                document.getElementById('syncStatus').className = 'ml-1 font-semibold text-emerald-300';
                 console.log("✅ Firebase connected successfully!");
-                
+
                 // Show notification button
                 document.getElementById('notificationBtn').classList.remove('hidden');
-                
+
                 // Check if notifications already enabled
                 if (Notification.permission === 'granted') {
                     notificationsEnabled = true;
@@ -164,12 +314,12 @@
             } catch (error) {
                 console.error("❌ Firebase initialization error:", error);
                 document.getElementById('syncStatus').innerHTML = '🔴 Connection Error';
-                document.getElementById('syncStatus').className = 'text-red-600 font-semibold';
+                document.getElementById('syncStatus').className = 'ml-1 font-semibold text-rose-300';
             }
         } else {
             console.log("⚠️ Firebase not configured yet. Using offline mode.");
             document.getElementById('syncStatus').innerHTML = '⚠️ Offline Mode';
-            document.getElementById('syncStatus').className = 'text-yellow-600 font-semibold';
+            document.getElementById('syncStatus').className = 'ml-1 font-semibold text-amber-200';
         }
 
         // Notification Functions
@@ -184,7 +334,7 @@
                     notificationsEnabled = true;
                     document.getElementById('notificationBtn').style.display = 'none';
                     document.getElementById('notificationStatus').classList.remove('hidden');
-                    showNotification("Notifications Enabled!", "You'll now get alerts when tasks are completed 🎉");
+                    showNotification("Notifications Enabled!", "You'll now get alerts for tasks & reminders 🎉");
                 } else {
                     alert("Please allow notifications in your browser settings!");
                 }
@@ -196,8 +346,7 @@
                 try {
                     new Notification(title, {
                         body: body,
-                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="%234f46e5"/><path d="M128 80c0 26-30 26-46 26-46 26-30 26-46 26-56 0-104 46-104 46" fill="%23fff"/></svg>',
-                        badge: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="%234f46e5"/></svg>',
+                        icon: 'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" width="256" height="256"><rect width="256" height="256" fill="%234f46e5"/><text x="50%" y="55%" text-anchor="middle" fill="white" font-size="120">✔</text></svg>',
                         tag: 'chore-update',
                         requireInteraction: false
                     });
@@ -218,15 +367,15 @@
                 },
                 {
                     name: 'Making Breakfast',
-                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                    subtasks: ['Daal Chadana', 'Chawal Chadana', 'Roti Banana', 'Sabji Banana']
                 },
                 {
                     name: 'Making Lunch',
-                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                    subtasks: ['Daal Chadana', 'Chawal Chadana', 'Roti Banana', 'Sabji Banana']
                 },
                 {
                     name: 'Making Dinner',
-                    subtasks: ['Daal Chawal', 'Roti Sabji', 'Sabji Chawal']
+                    subtasks: ['Daal Chadana', 'Chawal Chadana', 'Roti Banana', 'Sabji Banana']
                 },
                 {
                     name: 'Room Cleaning',
@@ -241,14 +390,15 @@
             selectedRoommate: 'Aditya',
             selectedDay: '',
             completedTasks: {},
-            lastUpdateBy: ''
+            lastUpdateBy: '',
+            reminders: [] // 🔔 time reminders
         };
 
         // Initialize app
         function init() {
             const dayIndex = new Date().getDay();
             state.selectedDay = state.days[dayIndex === 0 ? 6 : dayIndex - 1];
-            
+
             if (isFirebaseConfigured) {
                 console.log("Loading data from Firebase...");
                 loadFromFirebase();
@@ -257,12 +407,14 @@
                 console.log("Loading data from LocalStorage (offline mode)...");
                 loadFromLocalStorage();
             }
-            
+
             render();
+            startReminderChecker();
         }
 
         // Firebase Functions - Load data from Firebase
         function loadFromFirebase() {
+            // custom chores
             database.ref('customChores').once('value', (snapshot) => {
                 if (snapshot.exists()) {
                     state.customChores = snapshot.val() || [];
@@ -273,6 +425,7 @@
                 console.error("Error loading custom chores:", error);
             });
 
+            // completed tasks
             database.ref('completedTasks').once('value', (snapshot) => {
                 if (snapshot.exists()) {
                     state.completedTasks = snapshot.val() || {};
@@ -282,6 +435,17 @@
             }).catch(error => {
                 console.error("Error loading completed tasks:", error);
             });
+
+            // reminders
+            database.ref('reminders').once('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.reminders = snapshot.val() || [];
+                    console.log("Reminders loaded:", state.reminders);
+                }
+                render();
+            }).catch(error => {
+                console.error("Error loading reminders:", error);
+            });
         }
 
         // Setup real-time listeners for Firebase
@@ -289,14 +453,12 @@
             database.ref('completedTasks').on('value', (snapshot) => {
                 if (snapshot.exists()) {
                     const newTasks = snapshot.val() || {};
-                    
+
                     // Check for new completions (by other users)
                     for (let key in newTasks) {
                         if (!state.completedTasks[key] && newTasks[key]) {
-                            // A task was just completed
                             const parts = key.split('-');
                             if (parts[0] !== state.selectedRoommate) {
-                                // Task completed by someone else
                                 const roommate = parts[0];
                                 const day = parts[1];
                                 const task = parts.slice(2).join('-');
@@ -307,7 +469,7 @@
                             }
                         }
                     }
-                    
+
                     state.completedTasks = newTasks;
                     render();
                 }
@@ -319,6 +481,13 @@
                     render();
                 }
             });
+
+            database.ref('reminders').on('value', (snapshot) => {
+                if (snapshot.exists()) {
+                    state.reminders = snapshot.val() || [];
+                    render();
+                }
+            });
         }
 
         // Save data to Firebase
@@ -327,10 +496,14 @@
                 database.ref('completedTasks').set(state.completedTasks)
                     .then(() => console.log("✅ Tasks synced"))
                     .catch(error => console.error("❌ Sync error:", error));
-                    
+
                 database.ref('customChores').set(state.customChores)
                     .then(() => console.log("✅ Custom chores synced"))
-                    .catch(error => console.error("❌ Sync error:", error));
+                    .catch(error => console.error("❌ Custom chores sync error:", error));
+
+                database.ref('reminders').set(state.reminders)
+                    .then(() => console.log("✅ Reminders synced"))
+                    .catch(error => console.error("❌ Reminders sync error:", error));
             } else {
                 saveToLocalStorage();
             }
@@ -340,14 +513,18 @@
         function loadFromLocalStorage() {
             const savedCustomChores = localStorage.getItem('customChores');
             state.customChores = savedCustomChores ? JSON.parse(savedCustomChores) : [];
-            
+
             const savedTasks = localStorage.getItem('completedTasks');
             state.completedTasks = savedTasks ? JSON.parse(savedTasks) : {};
+
+            const savedReminders = localStorage.getItem('reminders');
+            state.reminders = savedReminders ? JSON.parse(savedReminders) : [];
         }
 
         function saveToLocalStorage() {
             localStorage.setItem('customChores', JSON.stringify(state.customChores));
             localStorage.setItem('completedTasks', JSON.stringify(state.completedTasks));
+            localStorage.setItem('reminders', JSON.stringify(state.reminders));
         }
 
         // Helper functions
@@ -366,7 +543,7 @@
         function getCompletedCount(roommate, day) {
             let total = 0;
             let completed = 0;
-            
+
             [...state.chores, ...state.customChores].forEach(chore => {
                 if (chore.subtasks && chore.subtasks.length > 0) {
                     chore.subtasks.forEach(subtask => {
@@ -380,7 +557,7 @@
                     if (state.completedTasks[key]) completed++;
                 }
             });
-            
+
             return { completed, total };
         }
 
@@ -389,8 +566,7 @@
             const key = getTaskKey(state.selectedRoommate, state.selectedDay, chore, subtask);
             const wasCompleted = state.completedTasks[key];
             state.completedTasks[key] = !wasCompleted;
-            
-            // Show local notification for task completion
+
             if (!wasCompleted) {
                 const taskName = subtask ? `${chore} - ${subtask}` : chore;
                 showNotification(
@@ -398,7 +574,7 @@
                     `${state.selectedRoommate} completed: ${taskName}`
                 );
             }
-            
+
             saveToFirebase();
             render();
         }
@@ -424,19 +600,75 @@
         function addNewChore() {
             const input = document.getElementById('newChoreInput');
             const newChore = input.value.trim();
-            
+
             if (newChore) {
                 state.customChores.push({ name: newChore, subtasks: [] });
                 input.value = '';
                 document.getElementById('addChoreForm').classList.add('hidden');
                 saveToFirebase();
                 render();
-                
+
                 showNotification(
                     "New Task Added! ➕",
                     `${state.selectedRoommate} added: ${newChore}`
                 );
             }
+        }
+
+        // 🔔 Reminders logic
+        function addReminder() {
+            const textInput = document.getElementById('reminderTextInput');
+            const timeInput = document.getElementById('reminderTimeInput');
+
+            const text = textInput.value.trim();
+            const time = timeInput.value;
+
+            if (!text || !time) {
+                alert("Please enter reminder text and time.");
+                return;
+            }
+
+            const id = 'rem_' + Date.now();
+            state.reminders.push({ id, text, time });
+
+            textInput.value = '';
+            timeInput.value = '';
+
+            saveToFirebase();
+            render();
+
+            showNotification("Reminder Saved ⏰", `${text} at ${time}`);
+        }
+
+        function deleteReminder(id) {
+            state.reminders = state.reminders.filter(r => r.id !== id);
+            saveToFirebase();
+            render();
+        }
+
+        function startReminderChecker() {
+            if (reminderInterval) clearInterval(reminderInterval);
+            checkReminders(); // run once immediately
+            reminderInterval = setInterval(checkReminders, 60000); // every minute
+        }
+
+        function checkReminders() {
+            if (!notificationsEnabled || !state.reminders.length) return;
+
+            const now = new Date();
+            const hhmm = now.toTimeString().slice(0, 5); // "HH:MM"
+            const todayKey = now.toDateString();
+
+            if (!triggeredRemindersToday[todayKey]) {
+                triggeredRemindersToday[todayKey] = {};
+            }
+
+            state.reminders.forEach(rem => {
+                if (rem.time === hhmm && !triggeredRemindersToday[todayKey][rem.id]) {
+                    triggeredRemindersToday[todayKey][rem.id] = true;
+                    showNotification("Time to do: " + rem.text, `Reminder: ${rem.text} ⏰`);
+                }
+            });
         }
 
         // Render functions
@@ -445,6 +677,7 @@
             renderDayButtons();
             renderChoresList();
             renderWeeklySummary();
+            renderReminders();
         }
 
         function renderRoommateButtons() {
@@ -452,11 +685,10 @@
             container.innerHTML = state.roommates.map(roommate => `
                 <button
                     onclick="selectRoommate('${roommate}')"
-                    class="p-3 rounded-lg font-medium transition-all ${
-                        state.selectedRoommate === roommate
-                            ? 'bg-indigo-600 text-white shadow-md'
-                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                    }"
+                    class="p-2.5 sm:p-3 rounded-xl text-sm font-medium transition-all
+                    ${state.selectedRoommate === roommate
+                        ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-900/40 scale-[1.02] ring-2 ring-indigo-200'
+                        : 'bg-white/80 text-slate-800 hover:bg-slate-100 shadow-sm'}"
                 >
                     ${roommate}
                 </button>
@@ -470,14 +702,13 @@
                 return `
                     <button
                         onclick="selectDay('${day}')"
-                        class="p-3 rounded-lg font-medium transition-all ${
-                            state.selectedDay === day
-                                ? 'bg-indigo-600 text-white shadow-md'
-                                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                        }"
+                        class="p-2.5 sm:p-3 rounded-xl text-xs sm:text-sm font-medium transition-all flex items-center justify-between gap-2
+                        ${state.selectedDay === day
+                            ? 'bg-indigo-500 text-white shadow-lg shadow-indigo-900/40 scale-[1.01]'
+                            : 'bg-white/80 text-slate-800 hover:bg-slate-100 shadow-sm'}"
                     >
-                        ${day}
-                        <span class="ml-2 text-xs">(${completed}/${total})</span>
+                        <span>${day}</span>
+                        <span class="text-[11px] sm:text-xs opacity-80">${completed}/${total}</span>
                     </button>
                 `;
             }).join('');
@@ -486,36 +717,36 @@
         function renderChoresList() {
             const container = document.getElementById('choresList');
             const allChores = [...state.chores, ...state.customChores];
-            
-            container.innerHTML = allChores.map(chore => {
+
+            container.innerHTML = allChores.map((chore, index) => {
+                const delay = 40 * index; // stagger animation a bit
                 if (chore.subtasks && chore.subtasks.length > 0) {
                     return `
-                        <div class="border-2 border-gray-200 rounded-lg p-3 bg-gray-50">
-                            <h3 class="font-bold text-gray-800 mb-2 text-lg">${chore.name}</h3>
-                            <div class="space-y-2 ml-2">
+                        <div class="border border-white/10 rounded-2xl p-3 sm:p-4 bg-slate-900/40 backdrop-blur-sm"
+                             style="animation: slideUp 0.3s ease-out; animation-delay:${delay}ms; animation-fill-mode:both;">
+                            <h3 class="font-semibold text-slate-100 mb-2 text-sm sm:text-base flex items-center gap-2">
+                                <span class="w-6 h-6 rounded-full bg-indigo-500/70 flex items-center justify-center text-xs text-white">🍽</span>
+                                ${chore.name}
+                            </h3>
+                            <div class="space-y-2 ml-1 sm:ml-2">
                                 ${chore.subtasks.map(subtask => {
                                     const completed = isTaskCompleted(chore.name, subtask);
                                     return `
                                         <button
                                             onclick="toggleTask('${chore.name.replace(/'/g, "\\'")}', '${subtask.replace(/'/g, "\\'")}')"
-                                            class="w-full p-3 rounded-lg flex items-center gap-3 transition-all ${
-                                                completed
-                                                    ? 'bg-green-100 border-2 border-green-500'
-                                                    : 'bg-white border-2 border-gray-300 hover:bg-gray-100'
-                                            }"
+                                            class="w-full text-left p-2.5 sm:p-3 rounded-xl flex items-center gap-3 transition-all text-xs sm:text-sm
+                                            ${completed
+                                                ? 'bg-emerald-500/15 border border-emerald-400/60'
+                                                : 'bg-slate-900/60 border border-slate-600/50 hover:bg-slate-800/80'}"
                                         >
-                                            <div class="w-5 h-5 rounded flex items-center justify-center ${
-                                                completed
-                                                    ? 'bg-green-500 text-white font-bold'
-                                                    : 'bg-white border-2 border-gray-400'
-                                            }">
+                                            <div class="w-5 h-5 rounded-md flex items-center justify-center
+                                                ${completed
+                                                    ? 'bg-emerald-400 text-white font-bold'
+                                                    : 'bg-slate-900 border border-slate-500'}">
                                                 ${completed ? '✓' : ''}
                                             </div>
-                                            <span class="font-medium text-left ${
-                                                completed
-                                                    ? 'text-green-800 line-through'
-                                                    : 'text-gray-700'
-                                            }">
+                                            <span class="font-medium
+                                                ${completed ? 'text-emerald-100 line-through' : 'text-slate-100'}">
                                                 ${subtask}
                                             </span>
                                         </button>
@@ -529,24 +760,21 @@
                     return `
                         <button
                             onclick="toggleTask('${chore.name.replace(/'/g, "\\'")}')"
-                            class="w-full p-4 rounded-lg flex items-center gap-3 transition-all ${
-                                completed
-                                    ? 'bg-green-100 border-2 border-green-500'
-                                    : 'bg-gray-50 border-2 border-gray-200 hover:bg-gray-100'
-                            }"
+                            class="w-full text-left p-3 sm:p-4 rounded-2xl flex items-center gap-3 transition-all
+                            border bg-slate-900/60 backdrop-blur-sm text-sm
+                            ${completed
+                                ? 'border-emerald-400/60 bg-emerald-500/15'
+                                : 'border-slate-700/60 hover:bg-slate-800/80'}"
+                            style="animation: slideUp 0.3s ease-out; animation-delay:${delay}ms; animation-fill-mode:both;"
                         >
-                            <div class="w-6 h-6 rounded-md flex items-center justify-center ${
-                                completed
-                                    ? 'bg-green-500 text-white font-bold'
-                                    : 'bg-white border-2 border-gray-300'
-                            }">
+                            <div class="w-6 h-6 rounded-lg flex items-center justify-center
+                                ${completed
+                                    ? 'bg-emerald-400 text-white font-bold'
+                                    : 'bg-slate-900 border border-slate-500 text-slate-200'}">
                                 ${completed ? '✓' : ''}
                             </div>
-                            <span class="font-medium flex-1 text-left ${
-                                completed
-                                    ? 'text-green-800 line-through'
-                                    : 'text-gray-800'
-                            }">
+                            <span class="font-medium flex-1
+                                ${completed ? 'text-emerald-100 line-through' : 'text-slate-100'}">
                                 ${chore.name}
                             </span>
                         </button>
@@ -558,26 +786,45 @@
         function renderWeeklySummary() {
             document.getElementById('summaryRoommate').textContent = state.selectedRoommate;
             const container = document.getElementById('weeklySummary');
-            
+
             container.innerHTML = state.days.map(day => {
                 const { completed, total } = getCompletedCount(state.selectedRoommate, day);
                 const percentage = total > 0 ? (completed / total) * 100 : 0;
-                
+
                 return `
                     <div class="flex items-center gap-3">
-                        <span class="w-24 text-sm font-medium text-gray-700">${day}</span>
-                        <div class="flex-1 bg-gray-200 rounded-full h-6 overflow-hidden">
+                        <span class="w-20 sm:w-24 text-[11px] sm:text-xs font-medium text-slate-200">${day}</span>
+                        <div class="flex-1 bg-slate-800/80 rounded-full h-4 sm:h-5 overflow-hidden">
                             <div
-                                class="bg-indigo-600 h-full flex items-center justify-end pr-2 transition-all duration-300"
-                                style="width: ${percentage}%"
+                                class="bg-gradient-to-r from-indigo-400 via-sky-400 to-emerald-400 h-full flex items-center justify-end pr-2 transition-all duration-300"
+                                style="width: ${percentage}%;"
                             >
-                                ${percentage > 20 ? `<span class="text-xs text-white font-medium">${completed}/${total}</span>` : ''}
+                                ${percentage > 18 ? `<span class="text-[10px] sm:text-xs text-white font-semibold">${completed}/${total}</span>` : ''}
                             </div>
                         </div>
-                        ${percentage <= 20 ? `<span class="text-xs text-gray-600 font-medium w-12">${completed}/${total}</span>` : ''}
+                        ${percentage <= 18 ? `<span class="text-[10px] sm:text-xs text-slate-200 font-medium w-10 text-right">${completed}/${total}</span>` : ''}
                     </div>
                 `;
             }).join('');
+        }
+
+        function renderReminders() {
+            const list = document.getElementById('remindersList');
+            if (!list) return;
+
+            if (!state.reminders.length) {
+                list.innerHTML = `<p class="text-[11px] text-slate-300">No reminders yet. Add one above 👆</p>`;
+                return;
+            }
+
+            list.innerHTML = state.reminders.map(rem => `
+                <div class="flex items-center justify-between">
+                    <span>${rem.time} — ${rem.text}</span>
+                    <button onclick="deleteReminder('${rem.id}')" class="text-rose-300 hover:text-rose-200 text-[11px]">
+                        remove
+                    </button>
+                </div>
+            `).join('');
         }
 
         // Start the app when page loads
@@ -585,4 +832,3 @@
     </script>
 </body>
 </html>
-
