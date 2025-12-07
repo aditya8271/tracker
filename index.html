@@ -1,60 +1,1299 @@
 <!DOCTYPE html>
 <html lang="en">
-
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>CyberQuest Habit Tracker</title>
-    <link rel="stylesheet" href="style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daily Habits Tracker</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: 
+                linear-gradient(135deg, rgba(102, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 50%, rgba(240, 147, 251, 0.9) 100%),
+                url('https://images.unsplash.com/photo-1557683316-973673baf926?w=1200&q=80');
+            background-size: 400% 400%, cover;
+            background-position: 0% 50%, center;
+            background-attachment: fixed;
+            animation: gradientShift 15s ease infinite;
+            min-height: 100vh;
+            padding: 15px;
+            position: relative;
+            overflow-x: hidden;
+        }
+
+        @keyframes gradientShift {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .sparkle {
+            position: fixed;
+            pointer-events: none;
+            animation: sparkleFloat 3s ease-out forwards;
+        }
+
+        @keyframes sparkleFloat {
+            0% { transform: translateY(0) scale(1); opacity: 1; }
+            100% { transform: translateY(-100px) scale(0); opacity: 0; }
+        }
+
+        .container {
+            max-width: 500px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 25px;
+            animation: fadeInDown 0.8s ease;
+        }
+
+        .header h1 {
+            font-size: 2.2em;
+            margin-bottom: 10px;
+            text-shadow: 3px 3px 6px rgba(0,0,0,0.3);
+            animation: pulse 2s ease-in-out infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .datetime-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 20px;
+            padding: 20px;
+            margin-bottom: 20px;
+            text-align: center;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
+            animation: slideInRight 0.8s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .date-display {
+            font-size: 1.1em;
+            color: #667eea;
+            font-weight: 600;
+            margin-bottom: 8px;
+        }
+
+        .time-display {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .tracker-card {
+            background: rgba(255, 255, 255, 0.98);
+            backdrop-filter: blur(20px);
+            border-radius: 25px;
+            padding: 25px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.4);
+            animation: fadeInUp 0.8s ease;
+            border: 2px solid rgba(255, 255, 255, 0.5);
+        }
+
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            padding: 15px 10px;
+            border-radius: 15px;
+            text-align: center;
+            color: white;
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+            transition: transform 0.3s ease;
+            animation: popIn 0.5s ease backwards;
+        }
+
+        .stat-card:nth-child(1) { animation-delay: 0.1s; }
+        .stat-card:nth-child(2) { animation-delay: 0.2s; }
+        .stat-card:nth-child(3) { animation-delay: 0.3s; }
+
+        @keyframes popIn {
+            0% { transform: scale(0); opacity: 0; }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        .stat-card:active {
+            transform: scale(0.95);
+        }
+
+        .stat-value {
+            font-size: 1.8em;
+            font-weight: bold;
+            margin-bottom: 3px;
+        }
+
+        .stat-label {
+            font-size: 0.75em;
+            opacity: 0.95;
+        }
+
+        .progress-section {
+            margin-bottom: 30px;
+            text-align: center;
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1), rgba(118, 75, 162, 0.1));
+            padding: 25px 20px;
+            border-radius: 20px;
+            box-shadow: inset 0 2px 10px rgba(0,0,0,0.05);
+        }
+
+        .progress-circle-container {
+            position: relative;
+            display: inline-block;
+            margin: 0 auto 20px;
+        }
+
+        .progress-circle {
+            width: 160px;
+            height: 160px;
+            display: block;
+        }
+
+        .progress-ring-bg {
+            fill: none;
+            stroke: #e8e8e8;
+            stroke-width: 12;
+        }
+
+        .progress-ring-fill {
+            fill: none;
+            stroke: url(#gradient);
+            stroke-width: 12;
+            stroke-linecap: round;
+            transition: stroke-dashoffset 0.8s cubic-bezier(0.65, 0, 0.35, 1);
+            filter: drop-shadow(0 0 10px rgba(102, 126, 234, 0.6));
+            transform-origin: center;
+            transform: rotate(-90deg);
+        }
+
+        .progress-text-container {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .progress-value {
+            font-size: 2.5em;
+            font-weight: bold;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            line-height: 1;
+            margin-bottom: 5px;
+        }
+
+        .progress-emoji {
+            font-size: 2em;
+            animation: bounce 2s ease-in-out infinite;
+            line-height: 1;
+        }
+
+        @keyframes bounce {
+            0%, 100% { transform: translateY(0) scale(1); }
+            50% { transform: translateY(-8px) scale(1.1); }
+        }
+
+        .progress-label {
+            color: #555;
+            font-size: 1.1em;
+            font-weight: 700;
+            margin-top: 8px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .habits-grid {
+            display: grid;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+
+        .habit-item {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 18px;
+            border-radius: 18px;
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+
+        .habit-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.4), transparent);
+            transition: left 0.5s;
+        }
+
+        .habit-item:active {
+            transform: scale(0.97);
+        }
+
+        .habit-item.completed {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+            box-shadow: 0 8px 25px rgba(168, 237, 234, 0.5);
+            animation: completePulse 0.6s ease;
+        }
+
+        @keyframes completePulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .habit-item.completed::before {
+            left: 100%;
+        }
+
+        .habit-item.completed::after {
+            content: '✓';
+            position: absolute;
+            right: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            font-size: 3em;
+            color: rgba(255,255,255,0.4);
+            font-weight: bold;
+            animation: checkmarkPop 0.5s ease;
+        }
+
+        @keyframes checkmarkPop {
+            0% { transform: translateY(-50%) scale(0) rotate(-180deg); }
+            50% { transform: translateY(-50%) scale(1.2) rotate(10deg); }
+            100% { transform: translateY(-50%) scale(1) rotate(0deg); }
+        }
+
+        .checkbox-wrapper {
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .checkbox {
+            width: 28px;
+            height: 28px;
+            border: 3px solid #667eea;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            position: relative;
+            background: white;
+        }
+
+        .checkbox.checked {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            border-color: #764ba2;
+            animation: checkboxBounce 0.5s ease;
+        }
+
+        @keyframes checkboxBounce {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.2); }
+        }
+
+        .checkbox.checked::after {
+            content: '✓';
+            position: absolute;
+            color: white;
+            font-size: 20px;
+            top: -3px;
+            left: 4px;
+            animation: checkAppear 0.3s ease;
+        }
+
+        @keyframes checkAppear {
+            0% { opacity: 0; transform: scale(0); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
+        .habit-label {
+            font-size: 1.05em;
+            color: #333;
+            font-weight: 600;
+            flex-grow: 1;
+        }
+
+        .habit-item.completed .habit-label {
+            color: #555;
+        }
+
+        .button-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .btn {
+            padding: 16px;
+            color: white;
+            border: none;
+            border-radius: 15px;
+            font-size: 1em;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.2);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.3);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+
+        .btn:active::before {
+            width: 300px;
+            height: 300px;
+        }
+
+        .reset-btn {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        .notification-btn {
+            background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        }
+
+        .btn:active {
+            transform: scale(0.95);
+        }
+
+        .history-btn {
+            width: 100%;
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            margin-bottom: 15px;
+        }
+
+        .notification-status {
+            text-align: center;
+            padding: 12px;
+            background: rgba(240, 240, 240, 0.9);
+            border-radius: 12px;
+            font-size: 0.9em;
+            color: #666;
+            margin-bottom: 15px;
+            animation: slideInLeft 0.6s ease;
+        }
+
+        .notification-status.enabled {
+            background: linear-gradient(135deg, #d4edda, #c3e6cb);
+            color: #155724;
+            box-shadow: 0 4px 15px rgba(21, 87, 36, 0.2);
+        }
+
+        .reminder-settings {
+            margin-top: 15px;
+            padding: 20px;
+            background: rgba(240, 240, 240, 0.9);
+            border-radius: 15px;
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .reminder-settings.visible {
+            max-height: 800px;
+            opacity: 1;
+        }
+
+        .reminder-title {
+            font-size: 1.2em;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+        }
+
+        .reminder-list {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 15px;
+        }
+
+        .reminder-item {
+            background: white;
+            padding: 12px;
+            border-radius: 10px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .reminder-info {
+            flex-grow: 1;
+        }
+
+        .reminder-time {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+        }
+
+        .reminder-message {
+            font-size: 0.9em;
+            color: #666;
+            margin-top: 3px;
+        }
+
+        .reminder-delete {
+            background: linear-gradient(135deg, #f093fb, #f5576c);
+            color: white;
+            border: none;
+            padding: 8px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 0.9em;
+            font-weight: bold;
+            transition: all 0.3s ease;
+        }
+
+        .reminder-delete:active {
+            transform: scale(0.95);
+        }
+
+        .add-reminder-form {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin-top: 10px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            margin-bottom: 10px;
+        }
+
+        .form-input {
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            transition: border 0.3s ease;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .form-textarea {
+            width: 100%;
+            padding: 10px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 1em;
+            margin-bottom: 10px;
+            resize: vertical;
+            min-height: 60px;
+        }
+
+        .form-textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        .add-reminder-btn {
+            width: 100%;
+            padding: 12px;
+            background: linear-gradient(135deg, #4facfe, #00f2fe);
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .add-reminder-btn:active {
+            transform: scale(0.97);
+        }
+
+        .history-section {
+            margin-top: 20px;
+            padding-top: 20px;
+            border-top: 2px dashed rgba(102, 126, 234, 0.3);
+            max-height: 0;
+            opacity: 0;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .history-section.visible {
+            max-height: 1000px;
+            opacity: 1;
+        }
+
+        .history-title {
+            font-size: 1.3em;
+            color: #333;
+            margin-bottom: 15px;
+            text-align: center;
+            font-weight: bold;
+        }
+
+        .history-grid {
+            display: grid;
+            gap: 10px;
+        }
+
+        .history-item {
+            background: linear-gradient(135deg, #ffecd2 0%, #fcb69f 100%);
+            padding: 15px;
+            border-radius: 12px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+            animation: slideInUp 0.4s ease backwards;
+        }
+
+        .history-item:nth-child(n) {
+            animation-delay: calc(0.1s * var(--index));
+        }
+
+        @keyframes slideInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .history-date {
+            font-weight: bold;
+            color: #333;
+            font-size: 0.95em;
+        }
+
+        .history-progress {
+            font-size: 1.4em;
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            font-weight: bold;
+        }
+
+        .motivational-quote {
+            text-align: center;
+            font-style: italic;
+            color: white;
+            margin-top: 25px;
+            font-size: 1.05em;
+            opacity: 0.95;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.2);
+            animation: fadeIn 1.5s ease;
+            padding: 0 10px;
+        }
+
+        @keyframes fadeInDown {
+            from { opacity: 0; transform: translateY(-30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(30px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes slideInLeft {
+            from { opacity: 0; transform: translateX(-50px); }
+            to { opacity: 1; transform: translateX(0); }
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 0.95; }
+        }
+
+        @media (max-width: 380px) {
+            .header h1 { font-size: 1.8em; }
+            .time-display { font-size: 2em; }
+            .stat-value { font-size: 1.5em; }
+            .stat-label { font-size: 0.7em; }
+        }
+    </style>
 </head>
-
 <body>
-    <header>
-        <h1>CyberQuest Habit Tracker ⚔️</h1>
-        <p>Track your daily habits & cybersecurity grind.</p>
-    </header>
+    <div class="container">
+        <div class="header">
+            <h1>✨ Daily Habits Tracker ✨</h1>
+        </div>
 
-    <main>
-        <section class="top-bar">
-            <div class="date-picker">
-                <label for="dateInput">Select Date:</label>
-                <input type="date" id="dateInput" />
-                <button id="todayBtn">Today</button>
-            </div>
+        <div class="datetime-card">
+            <div class="date-display" id="dateDisplay"></div>
+            <div class="time-display" id="timeDisplay"></div>
+        </div>
 
-            <div class="stats">
+        <div class="tracker-card">
+            <div class="stats-container">
                 <div class="stat-card">
-                    <span class="stat-label">Cyber Streak 🔥</span>
-                    <span class="stat-value" id="streakValue">0 days</span>
+                    <div class="stat-value" id="streakCount">0</div>
+                    <div class="stat-label">🔥 Streak</div>
                 </div>
                 <div class="stat-card">
-                    <span class="stat-label">Today’s Cyber Score 🛡️</span>
-                    <span class="stat-value" id="cyberScore">0 / 0</span>
+                    <div class="stat-value" id="totalDays">0</div>
+                    <div class="stat-label">📅 Days</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-value" id="avgProgress">0%</div>
+                    <div class="stat-label">📊 Average</div>
                 </div>
             </div>
-        </section>
 
-        <section class="habits-section">
-            <h2>Cyber Habits 🧑‍💻</h2>
-            <div id="cyberHabits" class="habit-list"></div>
-        </section>
+            <div class="progress-section">
+                <div class="progress-circle-container">
+                    <svg class="progress-circle" viewBox="0 0 180 180">
+                        <defs>
+                            <linearGradient id="gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                                <stop offset="0%" style="stop-color:#667eea;stop-opacity:1" />
+                                <stop offset="50%" style="stop-color:#764ba2;stop-opacity:1" />
+                                <stop offset="100%" style="stop-color:#f093fb;stop-opacity:1" />
+                            </linearGradient>
+                        </defs>
+                        <circle class="progress-ring-bg" cx="90" cy="90" r="70"/>
+                        <circle class="progress-ring-fill" id="progressCircle" cx="90" cy="90" r="70" 
+                                stroke-dasharray="440" stroke-dashoffset="440"/>
+                    </svg>
+                    <div class="progress-text-container">
+                        <div class="progress-value" id="progressText">0%</div>
+                        <div class="progress-emoji" id="progressEmoji">🎯</div>
+                    </div>
+                </div>
+                <div class="progress-label">Today's Progress</div>
+            </div>
 
-        <section class="habits-section">
-            <h2>General Habits 🌱</h2>
-            <div id="generalHabits" class="habit-list"></div>
-        </section>
+            <div class="habits-grid" id="habitsGrid"></div>
 
-        <section class="actions">
-            <button id="saveBtn">Save Today’s Progress ✅</button>
-            <span id="saveStatus"></span>
-        </section>
-    </main>
+            <div class="button-grid">
+                <button class="btn reset-btn" onclick="resetDay()">🔄 Reset</button>
+                <button class="btn notification-btn" onclick="toggleNotifications()">🔔 Notify</button>
+            </div>
 
-    <footer>
-        <p>Made by ADITYA 💻🔥</p>
-    </footer>
+            <button class="btn history-btn" onclick="toggleHistory()">📜 View History</button>
 
-    <script src="script.js"></script>
+            <button class="btn history-btn" onclick="toggleReminderSettings()" style="background: linear-gradient(135deg, #a8edea, #fed6e3);">⚙️ Customize Reminders</button>
+
+            <div class="notification-status" id="notificationStatus">
+                Notifications: Disabled
+            </div>
+
+            <div class="reminder-settings" id="reminderSettings">
+                <div class="reminder-title">⏰ Your Custom Reminders</div>
+                <div class="reminder-list" id="reminderList"></div>
+                
+                <div class="add-reminder-form">
+                    <div class="form-row">
+                        <input type="time" id="reminderTime" class="form-input" placeholder="Time">
+                        <input type="text" id="reminderEmoji" class="form-input" placeholder="Emoji (e.g., 💧)" maxlength="2">
+                    </div>
+                    <textarea id="reminderMessage" class="form-textarea" placeholder="Reminder message..."></textarea>
+                    <button class="add-reminder-btn" onclick="addCustomReminder()">➕ Add Reminder</button>
+                </div>
+            </div>
+
+            <div class="history-section" id="historySection">
+                <div class="history-title">📜 Your Journey</div>
+                <div class="history-grid" id="historyGrid"></div>
+            </div>
+        </div>
+
+        <div class="motivational-quote" id="quote"></div>
+    </div>
+
+    <script>
+        const habits = [
+            { id: 1, name: '🚿 Daily Bath' },
+            { id: 2, name: '🙏 Hanuman Chalisa' },
+            { id: 3, name: '💪 Workout' },
+            { id: 4, name: '🧘 Mind Reset' },
+            { id: 5, name: '🏃 Walk/Jogging' },
+            { id: 6, name: '🍎 Good Meal' },
+            { id: 7, name: '📚 6 Hours Study' },
+            { id: 8, name: '💻 Cyber Security' },
+            { id: 9, name: '💧 Drink Water (8 glasses)' },
+            { id: 10, name: '😴 8 Hours Sleep' },
+            { id: 11, name: '📱 Social Media Detox' },
+            { id: 12, name: '📝 Journal Entry' }
+        ];
+
+        const quotes = [
+            "Excellence is not a destination; it is a continuous journey.",
+            "Your only limit is your mind. Push beyond it!",
+            "Small daily improvements lead to stunning results.",
+            "Discipline is choosing between what you want now and what you want most.",
+            "Success is the sum of small efforts repeated day in and day out.",
+            "The secret of getting ahead is getting started.",
+            "Don't watch the clock; do what it does. Keep going."
+        ];
+
+        const defaultReminders = [
+            { hour: 7, minute: 0, message: "🌅 Good Morning! Start your day with a bath and Hanuman Chalisa", emoji: "🌅" },
+            { hour: 9, minute: 0, message: "💧 Time to drink water! Stay hydrated", emoji: "💧" },
+            { hour: 12, minute: 0, message: "💧 Drink water reminder! Stay hydrated", emoji: "💧" },
+            { hour: 15, minute: 0, message: "💧 Water break! Keep yourself hydrated", emoji: "💧" },
+            { hour: 17, minute: 0, message: "💪 Time for your workout! Let's go!", emoji: "💪" },
+            { hour: 18, minute: 0, message: "🏃 Evening walk/jogging time! Get moving", emoji: "🏃" },
+            { hour: 20, minute: 0, message: "📚 Study time! Focus on your goals", emoji: "📚" },
+            { hour: 21, minute: 0, message: "💧 Last water reminder of the day!", emoji: "💧" },
+            { hour: 22, minute: 0, message: "📝 Write your journal entry before bed", emoji: "📝" }
+        ];
+
+        let reminderTimes = [...defaultReminders];
+
+        let currentDate = '';
+        let completedHabits = {};
+        let allHistory = {};
+        let notificationsEnabled = false;
+        let lastNotificationCheck = '';
+        let historyVisible = false;
+        let reminderSettingsVisible = false;
+
+        function init() {
+            loadAllData();
+            loadCustomReminders();
+            updateDateTime();
+            renderHabits();
+            updateProgress();
+            updateStats();
+            renderHistory();
+            renderReminderList();
+            displayQuote();
+            checkNotificationPermission();
+            
+            setInterval(updateDateTime, 1000);
+            setInterval(checkReminders, 60000);
+        }
+
+        function createSparkle(x, y) {
+            const sparkle = document.createElement('div');
+            sparkle.className = 'sparkle';
+            sparkle.textContent = '✨';
+            sparkle.style.left = x + 'px';
+            sparkle.style.top = y + 'px';
+            sparkle.style.fontSize = (Math.random() * 20 + 15) + 'px';
+            document.body.appendChild(sparkle);
+            setTimeout(() => sparkle.remove(), 3000);
+        }
+
+        function loadAllData() {
+            currentDate = new Date().toDateString();
+            
+            const historyData = localStorage.getItem('habitHistory');
+            if (historyData) {
+                allHistory = JSON.parse(historyData);
+                if (allHistory[currentDate]) {
+                    completedHabits = allHistory[currentDate].habits || {};
+                } else {
+                    completedHabits = {};
+                }
+            } else {
+                allHistory = {};
+                completedHabits = {};
+            }
+
+            const notifStatus = localStorage.getItem('notificationsEnabled');
+            notificationsEnabled = notifStatus === 'true';
+        }
+
+        function updateDateTime() {
+            const now = new Date();
+            const dateOptions = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+            document.getElementById('dateDisplay').textContent = now.toLocaleDateString('en-US', dateOptions);
+            
+            const timeString = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+            document.getElementById('timeDisplay').textContent = timeString;
+
+            const newDate = now.toDateString();
+            if (newDate !== currentDate) {
+                currentDate = newDate;
+                loadAllData();
+                renderHabits();
+                updateProgress();
+                updateStats();
+                renderHistory();
+            }
+        }
+
+        function renderHabits() {
+            const grid = document.getElementById('habitsGrid');
+            grid.innerHTML = '';
+
+            habits.forEach((habit, index) => {
+                const isCompleted = completedHabits[habit.id];
+                const item = document.createElement('div');
+                item.className = `habit-item ${isCompleted ? 'completed' : ''}`;
+                item.style.animationDelay = (index * 0.05) + 's';
+                item.onclick = (e) => {
+                    createSparkle(e.clientX, e.clientY);
+                    toggleHabit(habit.id);
+                };
+
+                item.innerHTML = `
+                    <div class="checkbox-wrapper">
+                        <div class="checkbox ${isCompleted ? 'checked' : ''}"></div>
+                    </div>
+                    <div class="habit-label">${habit.name}</div>
+                `;
+
+                grid.appendChild(item);
+            });
+        }
+
+        function toggleHabit(id) {
+            completedHabits[id] = !completedHabits[id];
+            if (!completedHabits[id]) {
+                delete completedHabits[id];
+            }
+            saveProgress();
+            renderHabits();
+            updateProgress();
+            updateStats();
+            if (historyVisible) renderHistory();
+        }
+
+        function updateProgress() {
+            const total = habits.length;
+            const completed = Object.keys(completedHabits).length;
+            const percentage = Math.round((completed / total) * 100);
+
+            document.getElementById('progressText').textContent = percentage + '%';
+
+            const circle = document.getElementById('progressCircle');
+            const circumference = 440;
+            const offset = circumference - (percentage / 100) * circumference;
+            circle.style.strokeDashoffset = offset;
+
+            const emojiEl = document.getElementById('progressEmoji');
+            if (percentage === 100) {
+                emojiEl.textContent = '🎉';
+            } else if (percentage >= 75) {
+                emojiEl.textContent = '🔥';
+            } else if (percentage >= 50) {
+                emojiEl.textContent = '💪';
+            } else if (percentage >= 25) {
+                emojiEl.textContent = '⭐';
+            } else {
+                emojiEl.textContent = '🎯';
+            }
+        }
+
+        function saveProgress() {
+            const total = habits.length;
+            const completed = Object.keys(completedHabits).length;
+            const percentage = Math.round((completed / total) * 100);
+
+            allHistory[currentDate] = {
+                habits: {...completedHabits},
+                progress: percentage,
+                timestamp: new Date().toISOString()
+            };
+
+            localStorage.setItem('habitHistory', JSON.stringify(allHistory));
+        }
+
+        function updateStats() {
+            const dates = Object.keys(allHistory).sort((a, b) => new Date(b) - new Date(a));
+            
+            document.getElementById('totalDays').textContent = dates.length;
+
+            let streak = 0;
+            const today = new Date();
+            for (let i = 0; i < dates.length; i++) {
+                const checkDate = new Date(today);
+                checkDate.setDate(today.getDate() - i);
+                const dateStr = checkDate.toDateString();
+                
+                if (allHistory[dateStr] && allHistory[dateStr].progress > 0) {
+                    streak++;
+                } else {
+                    break;
+                }
+            }
+            document.getElementById('streakCount').textContent = streak;
+
+            if (dates.length > 0) {
+                const totalProgress = dates.reduce((sum, date) => sum + (allHistory[date].progress || 0), 0);
+                const avgProgress = Math.round(totalProgress / dates.length);
+                document.getElementById('avgProgress').textContent = avgProgress + '%';
+            } else {
+                document.getElementById('avgProgress').textContent = '0%';
+            }
+        }
+
+        function toggleHistory() {
+            const section = document.getElementById('historySection');
+            historyVisible = !historyVisible;
+            
+            if (historyVisible) {
+                section.classList.add('visible');
+                renderHistory();
+            } else {
+                section.classList.remove('visible');
+            }
+        }
+
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            grid.innerHTML = '';
+
+            const dates = Object.keys(allHistory).sort((a, b) => new Date(b) - new Date(a));
+            const recentDates = dates.slice(0, 10);
+
+            if (recentDates.length === 0) {
+                grid.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No history yet. Start tracking today! 🚀</div>';
+                return;
+            }
+
+            recentDates.forEach((date, index) => {
+                const item = document.createElement('div');
+                item.className = 'history-item';
+                item.style.setProperty('--index', index);
+                
+                const dateObj = new Date(date);
+                const isToday = date === new Date().toDateString();
+                const displayDate = isToday ? 'Today 🌟' : dateObj.toLocaleDateString('en-US', { month: 'short', day: 'numeric', weekday: 'short' });
+
+                item.innerHTML = `
+                    <div class="history-date">${displayDate}</div>
+                    <div class="history-progress">${allHistory[date].progress}%</div>
+                `;
+
+                grid.appendChild(item);
+            });
+        }
+
+        function resetDay() {
+            if (confirm('Are you sure you want to reset today\'s progress? 🔄')) {
+                completedHabits = {};
+                saveProgress();
+                renderHabits();
+                updateProgress();
+                updateStats();
+                if (historyVisible) renderHistory();
+            }
+        }
+
+        async function toggleNotifications() {
+            if (!notificationsEnabled) {
+                if (!("Notification" in window)) {
+                    alert("Your browser doesn't support notifications 😕");
+                    return;
+                }
+
+                const permission = await Notification.requestPermission();
+                
+                if (permission === "granted") {
+                    notificationsEnabled = true;
+                    localStorage.setItem('notificationsEnabled', 'true');
+                    
+                    // Register service worker for background notifications
+                    if ('serviceWorker' in navigator) {
+                        try {
+                            const registration = await navigator.serviceWorker.register(createServiceWorker());
+                            console.log('Service Worker registered');
+                            
+                            // Schedule all notifications
+                            scheduleNotifications();
+                        } catch (error) {
+                            console.log('Service Worker registration failed:', error);
+                        }
+                    }
+                    
+                    updateNotificationStatus();
+                    new Notification("🎉 Reminders Enabled!", {
+                        body: "You'll receive reminders throughout the day, even when the app is closed!",
+                        icon: "https://cdn-icons-png.flaticon.com/512/2965/2965260.png",
+                        badge: "https://cdn-icons-png.flaticon.com/512/2965/2965260.png",
+                        tag: 'welcome',
+                        requireInteraction: false
+                    });
+                } else {
+                    alert("Please enable notifications in your browser settings 🔔");
+                }
+            } else {
+                notificationsEnabled = false;
+                localStorage.setItem('notificationsEnabled', 'false');
+                
+                // Unregister service worker
+                if ('serviceWorker' in navigator) {
+                    navigator.serviceWorker.getRegistrations().then(registrations => {
+                        registrations.forEach(registration => registration.unregister());
+                    });
+                }
+                
+                updateNotificationStatus();
+            }
+        }
+
+        function createServiceWorker() {
+            const swCode = `
+                self.addEventListener('install', (event) => {
+                    self.skipWaiting();
+                });
+
+                self.addEventListener('activate', (event) => {
+                    event.waitUntil(clients.claim());
+                });
+
+                self.addEventListener('notificationclick', (event) => {
+                    event.notification.close();
+                    event.waitUntil(
+                        clients.openWindow('/')
+                    );
+                });
+            `;
+            
+            const blob = new Blob([swCode], { type: 'application/javascript' });
+            return URL.createObjectURL(blob);
+        }
+
+        function scheduleNotifications() {
+            // Clear existing intervals
+            if (window.notificationInterval) {
+                clearInterval(window.notificationInterval);
+            }
+            
+            // Check every minute for notifications
+            window.notificationInterval = setInterval(() => {
+                if (notificationsEnabled) {
+                    const now = new Date();
+                    const currentHour = now.getHours();
+                    const currentMinute = now.getMinutes();
+                    const timeKey = `${currentHour}:${currentMinute}`;
+                    
+                    // Prevent duplicate notifications in the same minute
+                    const lastNotif = localStorage.getItem('lastNotification');
+                    if (lastNotif === timeKey) return;
+                    
+                    reminderTimes.forEach(reminder => {
+                        if (currentHour === reminder.hour && currentMinute === reminder.minute) {
+                            // Show notification
+                            if (Notification.permission === "granted") {
+                                new Notification("⏰ Habit Reminder", {
+                                    body: reminder.message,
+                                    icon: "https://cdn-icons-png.flaticon.com/512/2965/2965260.png",
+                                    badge: "https://cdn-icons-png.flaticon.com/512/2965/2965260.png",
+                                    tag: 'habit-reminder-' + currentHour,
+                                    requireInteraction: false,
+                                    vibrate: [200, 100, 200]
+                                });
+                                
+                                localStorage.setItem('lastNotification', timeKey);
+                            }
+                        }
+                    });
+                }
+            }, 60000); // Check every minute
+        }
+
+        function checkNotificationPermission() {
+            if ("Notification" in window && Notification.permission === "granted") {
+                const saved = localStorage.getItem('notificationsEnabled');
+                if (saved === 'true') {
+                    notificationsEnabled = true;
+                    scheduleNotifications(); // Start notification scheduling
+                }
+            }
+            updateNotificationStatus();
+        }
+
+        function updateNotificationStatus() {
+            const statusDiv = document.getElementById('notificationStatus');
+            if (notificationsEnabled) {
+                statusDiv.textContent = '✅ Notifications ON - Works even when closed!';
+                statusDiv.className = 'notification-status enabled';
+            } else {
+                statusDiv.textContent = '🔕 Notifications Disabled - Tap to Enable';
+                statusDiv.className = 'notification-status';
+            }
+        }
+
+        function checkReminders() {
+            if (!notificationsEnabled) return;
+
+            const now = new Date();
+            const currentTime = `${now.getHours()}:${now.getMinutes()}`;
+            
+            if (currentTime === lastNotificationCheck) return;
+            lastNotificationCheck = currentTime;
+
+            reminderTimes.forEach(reminder => {
+                if (now.getHours() === reminder.hour && now.getMinutes() === reminder.minute) {
+                    new Notification("⏰ Habit Reminder", {
+                        body: reminder.message,
+                        vibrate: [200, 100, 200]
+                    });
+                }
+            });
+        }
+
+        function displayQuote() {
+            const quote = quotes[Math.floor(Math.random() * quotes.length)];
+            document.getElementById('quote').textContent = `"${quote}"`;
+        }
+
+        function loadCustomReminders() {
+            const saved = localStorage.getItem('customReminders');
+            if (saved) {
+                const customReminders = JSON.parse(saved);
+                reminderTimes = [...defaultReminders, ...customReminders];
+            }
+        }
+
+        function saveCustomReminders() {
+            const customReminders = reminderTimes.filter(r => !defaultReminders.some(
+                d => d.hour === r.hour && d.minute === r.minute && d.message === r.message
+            ));
+            localStorage.setItem('customReminders', JSON.stringify(customReminders));
+        }
+
+        function toggleReminderSettings() {
+            const section = document.getElementById('reminderSettings');
+            reminderSettingsVisible = !reminderSettingsVisible;
+            
+            if (reminderSettingsVisible) {
+                section.classList.add('visible');
+                renderReminderList();
+            } else {
+                section.classList.remove('visible');
+            }
+        }
+
+        function renderReminderList() {
+            const list = document.getElementById('reminderList');
+            list.innerHTML = '';
+
+            if (reminderTimes.length === 0) {
+                list.innerHTML = '<div style="text-align: center; color: #999; padding: 20px;">No reminders set. Add your first one below! 🎯</div>';
+                return;
+            }
+
+            reminderTimes.sort((a, b) => (a.hour * 60 + a.minute) - (b.hour * 60 + b.minute));
+
+            reminderTimes.forEach((reminder, index) => {
+                const item = document.createElement('div');
+                item.className = 'reminder-item';
+                item.style.animationDelay = (index * 0.05) + 's';
+
+                const timeStr = `${String(reminder.hour).padStart(2, '0')}:${String(reminder.minute).padStart(2, '0')}`;
+                const isDefault = defaultReminders.some(
+                    d => d.hour === reminder.hour && d.minute === reminder.minute && d.message === reminder.message
+                );
+
+                item.innerHTML = `
+                    <div class="reminder-info">
+                        <div class="reminder-time">${reminder.emoji || '⏰'} ${timeStr}</div>
+                        <div class="reminder-message">${reminder.message}</div>
+                    </div>
+                    ${!isDefault ? '<button class="reminder-delete" onclick="deleteReminder(' + index + ')">🗑️</button>' : ''}
+                `;
+
+                list.appendChild(item);
+            });
+        }
+
+        function addCustomReminder() {
+            const timeInput = document.getElementById('reminderTime');
+            const emojiInput = document.getElementById('reminderEmoji');
+            const messageInput = document.getElementById('reminderMessage');
+
+            const time = timeInput.value;
+            const emoji = emojiInput.value || '⏰';
+            const message = messageInput.value.trim();
+
+            if (!time || !message) {
+                alert('Please fill in both time and message! ⏰');
+                return;
+            }
+
+            const [hour, minute] = time.split(':').map(Number);
+
+            const newReminder = {
+                hour,
+                minute,
+                message: emoji + ' ' + message,
+                emoji
+            };
+
+            reminderTimes.push(newReminder);
+            saveCustomReminders();
+            renderReminderList();
+
+            // Clear inputs
+            timeInput.value = '';
+            emojiInput.value = '';
+            messageInput.value = '';
+
+            // Show success notification
+            if (notificationsEnabled) {
+                new Notification("✅ Reminder Added!", {
+                    body: `New reminder set for ${String(hour).padStart(2, '0')}:${String(minute).padStart(2, '0')}`,
+                    icon: "https://cdn-icons-png.flaticon.com/512/2965/2965260.png"
+                });
+            }
+        }
+
+        function deleteReminder(index) {
+            if (confirm('Delete this reminder? 🗑️')) {
+                reminderTimes.splice(index, 1);
+                saveCustomReminders();
+                renderReminderList();
+            }
+        }
+
+        init();
+    </script>
 </body>
-
 </html>
