@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>CyberQuest Habit Tracker</title>
+    <link rel="stylesheet" href="style.css" />
+</head>
+
+<body>
+    <header>
+        <h1>CyberQuest Habit Tracker ⚔️</h1>
+        <p>Track your daily habits & cybersecurity grind.</p>
+    </header>
+
+    <main>
+        <section class="top-bar">
+            <div class="date-picker">
+                <label for="dateInput">Select Date:</label>
+                <input type="date" id="dateInput" />
+                <button id="todayBtn">Today</button>
+            </div>
+
+            <div class="stats">
+                <div class="stat-card">
+                    <span class="stat-label">Cyber Streak 🔥</span>
+                    <span class="stat-value" id="streakValue">0 days</span>
+                </div>
+                <div class="stat-card">
+                    <span class="stat-label">Today’s Cyber Score 🛡️</span>
+                    <span class="stat-value" id="cyberScore">0 / 0</span>
+                </div>
+            </div>
+        </section>
+
+        <section class="habits-section">
+            <h2>Cyber Habits 🧑‍💻</h2>
+            <div id="cyberHabits" class="habit-list"></div>
+        </section>
+
+        <section class="habits-section">
+            <h2>General Habits 🌱</h2>
+            <div id="generalHabits" class="habit-list"></div>
+        </section>
+
+        <section class="actions">
+            <button id="saveBtn">Save Today’s Progress ✅</button>
+            <span id="saveStatus"></span>
+        </section>
+    </main>
+
+    <footer>
+        <p>Made by ADITYA 💻🔥</p>
+    </footer>
+
+    <script src="script.js"></script>
+</body>
+
+</html>
